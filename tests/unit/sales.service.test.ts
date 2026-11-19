@@ -82,6 +82,7 @@ function setup(overrides: Record<string, jest.Mock> = {}) {
       return Promise.resolve();
     }),
     findSalesOrder: jest.fn().mockImplementation(() => Promise.resolve(order)),
+    createPaymentReceipt: jest.fn(),
     ...overrides,
   };
   const inventory = {
@@ -135,5 +136,34 @@ describe('SalesService', () => {
     ]);
     expect(repository.updateSalesOrderStatus).toHaveBeenCalledWith(12, 'approved');
     expect(result.status).toBe('approved');
+  });
+
+  it('subtracts issued credit notes before accepting invoice payment allocations', async () => {
+    const { service, repository } = setup({
+      findSalesInvoiceForUpdate: jest.fn().mockResolvedValue({
+        id: 66,
+        customerId: 2,
+        currencyId: 5,
+        status: 'issued',
+        total: '100.0000',
+      }),
+      sumAllocatedPayments: jest.fn().mockResolvedValue({ amount: '20.0000' }),
+      sumIssuedCreditNotes: jest.fn().mockResolvedValue({ amount: '30.0000' }),
+    });
+
+    await expect(
+      service.createPaymentReceipt(
+        {
+          receiptNumber: 'PR-1',
+          customerId: 2,
+          currencyId: 5,
+          receivedAmount: '51.0000',
+          paymentMethod: 'cash',
+          allocations: [{ salesInvoiceId: 66, amount: '51.0000' }],
+        },
+        11,
+      ),
+    ).rejects.toMatchObject({ statusCode: 422 });
+    expect(repository.createPaymentReceipt).not.toHaveBeenCalled();
   });
 });

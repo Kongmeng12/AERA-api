@@ -440,7 +440,10 @@ export class SalesService {
         const alreadyPaid = parseDecimal4(
           (await repository.sumAllocatedPayments(invoice.id))?.amount ?? ZERO,
         );
-        const outstanding = parseDecimal4(invoice.total) - alreadyPaid;
+        const credited = parseDecimal4(
+          (await repository.sumIssuedCreditNotes(invoice.id))?.amount ?? ZERO,
+        );
+        const outstanding = parseDecimal4(invoice.total) - alreadyPaid - credited;
         if (parseDecimal4(allocation.amount) > outstanding) {
           throw fieldError(
             'allocations',
@@ -474,12 +477,15 @@ export class SalesService {
         })),
       );
       for (const invoice of invoices) {
-        const paid = parseDecimal4(
-          (await repository.sumAllocatedPayments(invoice.id))?.amount ?? ZERO,
-        );
+        const [paidResult, creditResult] = await Promise.all([
+          repository.sumAllocatedPayments(invoice.id),
+          repository.sumIssuedCreditNotes(invoice.id),
+        ]);
+        const paid = parseDecimal4(paidResult?.amount ?? ZERO);
+        const credited = parseDecimal4(creditResult?.amount ?? ZERO);
         await repository.updateSalesInvoiceStatus(
           invoice.id,
-          paid >= parseDecimal4(invoice.total) ? 'paid' : 'partially_paid',
+          paid + credited >= parseDecimal4(invoice.total) ? 'paid' : 'partially_paid',
         );
       }
       const allocations = await repository.findPaymentAllocations(receipt.id);

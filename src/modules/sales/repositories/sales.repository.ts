@@ -15,6 +15,7 @@ import {
 import { Item, ItemUnitConversion, Unit } from '../../master-data/entities/item.entity';
 import { SalesPrice } from '../../master-data/entities/pricing.entity';
 import {
+  CreditNote,
   PaymentAllocation,
   PaymentReceipt,
   SalesInvoice,
@@ -285,6 +286,15 @@ export class SalesRepository {
       .innerJoin(PaymentReceipt, 'receipt', 'receipt.id = allocation.paymentReceiptId')
       .where('allocation.salesInvoiceId = :salesInvoiceId', { salesInvoiceId })
       .andWhere('receipt.status = :status', { status: 'posted' })
+      .getRawOne<{ amount: string }>();
+  }
+
+  sumIssuedCreditNotes(salesInvoiceId: number) {
+    return this.repo(CreditNote)
+      .createQueryBuilder('creditNote')
+      .select('COALESCE(SUM(creditNote.amount), 0)', 'amount')
+      .where('creditNote.salesInvoiceId = :salesInvoiceId', { salesInvoiceId })
+      .andWhere('creditNote.status = :status', { status: 'issued' })
       .getRawOne<{ amount: string }>();
   }
 

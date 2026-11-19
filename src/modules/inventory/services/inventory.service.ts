@@ -5,7 +5,7 @@ import { addDecimal4, formatDecimal4, parseDecimal4 } from '../../../shared/help
 import { toPaginatedResult } from '../../../shared/helpers/pagination';
 import type { PaginatedResult } from '../../../shared/response/api-response';
 import { InventoryReservation } from '../entities/inventory-reservation.entity';
-import { InventoryBalance, StockMovement } from '../entities/stock.entity';
+import { InventoryBalance, StockBatch, StockMovement } from '../entities/stock.entity';
 import {
   toInventoryBalanceResponse,
   toStockBatchResponse,
@@ -342,5 +342,139 @@ export class InventoryService {
         'Returned quantity exceeds the stock dispatched for this delivery line',
       );
     }
+  }
+
+  async receiveSalesReturn(
+    manager: EntityManager,
+    input: {
+      returnId: number;
+      returnLineNumber: number;
+      salesOrderLineId: number;
+      itemId: number;
+      batchId: number;
+      unitId: number;
+      quantity: string;
+      actorId: number;
+    },
+  ): Promise<number> {
+    const movementRepository = manager.getRepository(StockMovement);
+    const batchRepository = manager.getRepository(StockBatch);
+    const balanceRepository = manager.getRepository(InventoryBalance);
+    const batch = await batchRepository.findOne({
+      where: { id: input.batchId, itemId: input.itemId, status: 'active' },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!batch) {
+      throw new ConflictError(
+        ERROR_CODES.RESOURCE_CONFLICT,
+        'Returned stock batch does not exist or is inactive',
+      );
+    }
+
+    const shipped = await movementRepository
+      .createQueryBuilder('movement')
+      .where('movement.movementType = :movementType', { movementType: 'sale' })
+      .andWhere('movement.sourceType = :sourceType', { sourceType: 'delivery' })
+      .andWhere('movement.reason = :reason', {
+        reason: `sales_order_line:${input.salesOrderLineId}`,
+      })
+      .andWhere('movement.itemId = :itemId', { itemId: input.itemId })
+      .andWhere('movement.batchId = :batchId', { batchId: input.batchId })
+      .andWhere('movement.unitId = :unitId', { unitId: input.unitId })
+      .andWhere('movement.fromWarehouseId IS NOT NULL')
+      .andWhere('movement.fromZoneId IS NOT NULL')
+      .orderBy('movement.id', 'ASC')
+      .getMany();
+    const reason = `sales_order_line:${input.salesOrderLineId};source_batch_id:${input.batchId}`;
+    const returned = await movementRepository
+      .createQueryBuilder('movement')
+      .where('movement.movementType = :movementType', { movementType: 'sales_return' })
+      .andWhere('movement.sourceType = :sourceType', { sourceType: 'sales_return' })
+      .andWhere('movement.reason = :reason', {
+        reason,
+      })
+      .andWhere('movement.itemId = :itemId', { itemId: input.itemId })
+      .andWhere('movement.unitId = :unitId', { unitId: input.unitId })
+      .getMany();
+    const shippedQuantity = shipped.reduce(
+      (sum, movement) => sum + parseDecimal4(movement.quantity),
+      0n,
+    );
+    const returnedQuantity = returned.reduce(
+      (sum, movement) => sum + parseDecimal4(movement.quantity),
+      0n,
+    );
+    const quantity = parseDecimal4(input.quantity);
+    if (quantity <= 0n || returnedQuantity + quantity > shippedQuantity || shipped.length === 0) {
+      throw new ConflictError(
+        ERROR_CODES.RESOURCE_CONFLICT,
+        'Returned quantity exceeds the delivered quantity for this batch',
+      );
+    }
+
+    const origin = shipped[0];
+    if (origin.fromWarehouseId === null || origin.fromZoneId === null) {
+      throw new ConflictError(
+        ERROR_CODES.RESOURCE_CONFLICT,
+        'Original delivery location is missing for returned stock',
+      );
+    }
+    const returnedBatch = await batchRepository.save(
+      batchRepository.create({
+        itemId: batch.itemId,
+        batchNumber: `SR-${input.returnId}-${input.returnLineNumber}`,
+        manufacturedAt: batch.manufacturedAt,
+        expiresAt: batch.expiresAt,
+        qcStatus: 'pending',
+        sourceType: 'sales_return',
+        sourceId: `${input.returnId}:${input.returnLineNumber}:source-batch-${batch.id}`,
+        status: 'active',
+      }),
+    );
+    let balance = await balanceRepository.findOne({
+      where: {
+        itemId: input.itemId,
+        batchId: returnedBatch.id,
+        unitId: input.unitId,
+        warehouseId: origin.fromWarehouseId,
+        zoneId: origin.fromZoneId,
+        stockStatus: 'qc_hold',
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!balance) {
+      balance = balanceRepository.create({
+        itemId: input.itemId,
+        batchId: returnedBatch.id,
+        unitId: input.unitId,
+        warehouseId: origin.fromWarehouseId,
+        zoneId: origin.fromZoneId,
+        stockStatus: 'qc_hold',
+        quantityOnHand: '0.0000',
+        quantityReserved: '0.0000',
+      });
+    }
+    balance.quantityOnHand = addDecimal4(balance.quantityOnHand, input.quantity);
+    await balanceRepository.save(balance);
+    await movementRepository.save(
+      movementRepository.create({
+        movementNumber: `SR-${input.returnId}-${input.returnLineNumber}`,
+        movementType: 'sales_return',
+        itemId: input.itemId,
+        batchId: returnedBatch.id,
+        unitId: input.unitId,
+        quantity: input.quantity,
+        fromWarehouseId: null,
+        fromZoneId: null,
+        toWarehouseId: origin.fromWarehouseId,
+        toZoneId: origin.fromZoneId,
+        sourceType: 'sales_return',
+        sourceId: String(input.returnId),
+        idempotencyKey: null,
+        actorId: input.actorId,
+        reason,
+      }),
+    );
+    return returnedBatch.id;
   }
 }
