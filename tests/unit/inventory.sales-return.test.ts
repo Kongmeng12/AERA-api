@@ -13,7 +13,7 @@ function createMovementQuery(result: object[]) {
 }
 
 describe('InventoryService customer return receipt', () => {
-  it('creates an isolated pending-QC batch for returned stock', async () => {
+  it('creates a separately traceable batch and records returned stock as available', async () => {
     const movementQuery = createMovementQuery([
       {
         quantity: '2.0000',
@@ -71,13 +71,13 @@ describe('InventoryService customer return receipt', () => {
       expect.objectContaining({
         itemId: 5,
         batchNumber: 'SR-21-1',
-        qcStatus: 'pending',
+        qcStatus: 'not_tracked',
         sourceType: 'sales_return',
         sourceId: '21:1:source-batch-30',
       }),
     );
     expect(balanceRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ batchId: 31, stockStatus: 'qc_hold' }),
+      expect.objectContaining({ batchId: 31, stockStatus: 'available' }),
     );
     expect(movementRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({ batchId: 31, movementType: 'sales_return' }),

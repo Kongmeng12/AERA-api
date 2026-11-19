@@ -8,7 +8,6 @@ import { createInventoryModule } from '../modules/inventory/inventory.module';
 import { createMasterDataModule } from '../modules/master-data/master-data.module';
 import { createPurchasingModule } from '../modules/purchasing/purchasing.module';
 import { createProductionModule } from '../modules/production/production.module';
-import { createQualityControlModule } from '../modules/quality-control/quality-control.module';
 import { createRolesModule } from '../modules/roles/roles.module';
 import { createReturnsModule } from '../modules/returns/returns.module';
 import { createSalesModule } from '../modules/sales/sales.module';
@@ -25,7 +24,6 @@ export function createApiRouter(dataSource: DataSource): Router {
   const finance = createFinanceModule(dataSource);
   const delivery = createDeliveryModule(dataSource, sales.service, inventory.service);
   const production = createProductionModule(dataSource);
-  const qualityControl = createQualityControlModule(dataSource);
 
   const router = Router();
   router.use('/health', createHealthRouter(dataSource));
@@ -40,6 +38,5 @@ export function createApiRouter(dataSource: DataSource): Router {
   router.use(finance.router);
   router.use(delivery.router);
   router.use('/production', production.router);
-  router.use('/quality-control', qualityControl.router);
   return router;
 }

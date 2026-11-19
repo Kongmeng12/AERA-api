@@ -65,7 +65,6 @@ export class InventoryService {
         .where('balance.itemId = :itemId', { itemId: line.itemId })
         .andWhere('balance.unitId = :unitId', { unitId: line.unitId })
         .andWhere('balance.stockStatus = :stockStatus', { stockStatus: 'available' })
-        .andWhere('batch.qcStatus = :qcStatus', { qcStatus: 'passed' })
         .andWhere('batch.status = :batchStatus', { batchStatus: 'active' })
         .orderBy('batch.expiresAt', 'ASC')
         .addOrderBy('balance.id', 'ASC')
@@ -103,7 +102,7 @@ export class InventoryService {
       if (remaining > 0n) {
         throw new ConflictError(
           ERROR_CODES.RESOURCE_CONFLICT,
-          `Insufficient QC-passed available stock for item ${line.itemId} in unit ${line.unitId}`,
+          `Insufficient available stock for item ${line.itemId} in unit ${line.unitId}`,
         );
       }
     }
@@ -425,7 +424,7 @@ export class InventoryService {
         batchNumber: `SR-${input.returnId}-${input.returnLineNumber}`,
         manufacturedAt: batch.manufacturedAt,
         expiresAt: batch.expiresAt,
-        qcStatus: 'pending',
+        qcStatus: 'not_tracked',
         sourceType: 'sales_return',
         sourceId: `${input.returnId}:${input.returnLineNumber}:source-batch-${batch.id}`,
         status: 'active',
@@ -438,7 +437,7 @@ export class InventoryService {
         unitId: input.unitId,
         warehouseId: origin.fromWarehouseId,
         zoneId: origin.fromZoneId,
-        stockStatus: 'qc_hold',
+        stockStatus: 'available',
       },
       lock: { mode: 'pessimistic_write' },
     });
@@ -449,7 +448,7 @@ export class InventoryService {
         unitId: input.unitId,
         warehouseId: origin.fromWarehouseId,
         zoneId: origin.fromZoneId,
-        stockStatus: 'qc_hold',
+        stockStatus: 'available',
         quantityOnHand: '0.0000',
         quantityReserved: '0.0000',
       });

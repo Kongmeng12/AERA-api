@@ -10,7 +10,6 @@ import '../modules/inventory/routes/inventory.openapi';
 import '../modules/master-data/routes/master-data.openapi';
 import '../modules/purchasing/routes/purchasing.openapi';
 import '../modules/production/routes/production.openapi';
-import '../modules/quality-control/routes/quality-control.openapi';
 import '../modules/returns/routes/returns.openapi';
 import '../modules/roles/routes/roles.openapi';
 import '../modules/sales/routes/sales.openapi';

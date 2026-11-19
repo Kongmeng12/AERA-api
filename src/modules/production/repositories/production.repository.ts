@@ -175,10 +175,7 @@ export class ProductionRepository {
         { itemId, unitId, batchId },
       )
       .andWhere('balance.stockStatus = :stockStatus', { stockStatus: 'available' })
-      .andWhere('batch.qcStatus = :qcStatus AND batch.status = :batchStatus', {
-        qcStatus: 'passed',
-        batchStatus: 'active',
-      })
+      .andWhere('batch.status = :batchStatus', { batchStatus: 'active' })
       .orderBy('balance.id', 'ASC')
       .setLock('pessimistic_write')
       .getMany();
@@ -197,7 +194,7 @@ export class ProductionRepository {
   createBatch(data: DeepPartial<StockBatch>) {
     return this.save(StockBatch, data);
   }
-  async addQcHoldBalance(data: {
+  async addAvailableBalance(data: {
     itemId: number;
     batchId: number;
     unitId: number;
@@ -214,7 +211,7 @@ export class ProductionRepository {
         data.unitId,
         data.warehouseId,
         data.zoneId,
-        'qc_hold',
+        'available',
         data.quantity,
       ],
     );

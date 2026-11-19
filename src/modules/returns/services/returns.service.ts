@@ -122,7 +122,7 @@ export class ReturnsService {
           batchId: input.batchId,
           unitId: invoiceLine.unitId,
           quantity: formatDecimal4(quantity),
-          disposition: 'qc_hold',
+          disposition: 'available',
           unitPriceSnapshot: invoiceLine.unitPrice,
           lineCreditAmount: formatDecimal4(lineCreditAmount),
           reason: input.reason ?? null,

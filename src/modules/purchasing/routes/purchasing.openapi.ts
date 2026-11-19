@@ -130,7 +130,7 @@ openApiRegistry.registerPath({
   security,
   summary: 'Post a goods receipt',
   description:
-    'Requires role: admin, purchasing or warehouse. Accepted quantities are posted to QC-hold stock.',
+    'Requires role: admin, purchasing or warehouse. Accepted quantities are posted as available stock; physical QC is handled outside this API.',
   request: { body: jsonBody(createGoodsReceiptSchema) },
   responses: {
     201: successResponse('Successfully created goods receipt', goodsReceiptResponseSchema),

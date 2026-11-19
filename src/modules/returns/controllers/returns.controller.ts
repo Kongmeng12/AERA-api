@@ -48,7 +48,7 @@ export class ReturnsController {
         req.validated.body as ApproveSalesReturnDto,
         requireIdentity(req).userId,
       ),
-      'Successfully approved return, held returned stock for QC, and issued credit note',
+      'Successfully approved return, recorded returned stock as available, and issued credit note',
     );
   };
 

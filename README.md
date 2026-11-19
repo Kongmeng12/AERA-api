@@ -83,22 +83,20 @@ Integration tests **wipe the database they connect to**, so they refuse to run u
 | `POST /supplier-bills`                                                   | Admin, Accounting                                          |
 | `POST /supplier-bills/:id/post`                                          | Admin, Manager, Accounting                                 |
 | `POST /supplier-payments`                                                | Admin, Accounting                                          |
-| `GET /production/bills-of-materials`, `GET /production/bills-of-materials/:id` | Admin, Manager, Warehouse, QC                         |
+| `GET /production/bills-of-materials`, `GET /production/bills-of-materials/:id` | Admin, Manager, Warehouse                         |
 | `POST /production/bills-of-materials`, `POST /production/bills-of-materials/:id/activate` | Admin, Manager |
-| `GET /production/orders`, `GET /production/orders/:id`                   | Admin, Manager, Warehouse, QC                              |
+| `GET /production/orders`, `GET /production/orders/:id`                   | Admin, Manager, Warehouse                                  |
 | `POST /production/orders`                                                | Admin, Manager                                             |
 | `POST /production/orders/:id/material-issues`, `POST /production/orders/:id/outputs` | Admin, Manager, Warehouse                  |
-| `GET /quality-control/test-definitions`, `GET /quality-control/inspections`, `GET /quality-control/inspections/:id` | Admin, Manager, QC, Warehouse |
-| `POST /quality-control/test-definitions`, `POST /quality-control/inspections`, `POST /quality-control/inspections/:id/release` | Admin, Manager, QC |
 | `GET /deliveries`, `GET /deliveries/:id`                                 | Admin, Manager, Sales, Warehouse, Driver                   |
 | `POST /deliveries`                                                       | Admin, Manager, Warehouse                                  |
 | `POST /deliveries/:id/dispatch`, `POST /deliveries/:id/complete`         | Admin, Manager, Warehouse, Driver                          |
 
-Sales orders use effective customer/item price lists and require manager approval before full stock reservation. Only available stock from QC-passed active batches can be reserved. Delivery dispatch reduces on-hand stock; completion records delivered/returned quantities and invoices delivered goods. Payment receipts must be fully allocated to matching customer invoices.
+Sales orders use effective customer/item price lists and require manager approval before full stock reservation. Only available stock from active batches can be reserved. Delivery dispatch reduces on-hand stock; completion records delivered/returned quantities and invoices delivered goods. Payment receipts must be fully allocated to matching customer invoices.
 
-Approved customer returns create a credit note and place returned quantities in QC hold before they can be sold again.
+Approved customer returns create a credit note and record returned quantities as available stock.
 Supplier bills are matched to received PO quantities before posting; supplier payments must be allocated to posted bills.
-Production orders consume only available, QC-passed raw materials; recorded output remains in QC hold. QC numeric results are checked against configured bounds, and qualitative results require an inspector decision. A passing inspection does not release stock until the explicit release endpoint is used. Production quantities currently use the item's base output unit, and material issues require inventory in the BOM unit; automatic unit conversion is not supported.
+Accepted receipts and production outputs are recorded as available stock. QC is performed manually outside the API; QC endpoints are deferred. Production quantities currently use the item's base output unit, and material issues require inventory in the BOM unit; automatic unit conversion is not supported.
 
 ## Project layout
 

@@ -278,18 +278,17 @@ export class ProductionService {
         if (available < request.quantity)
           throw new ConflictError(
             ERROR_CODES.RESOURCE_CONFLICT,
-            `Insufficient QC-passed available stock for material ${request.materialItemId}, batch ${request.batchId}`,
+            `Insufficient available stock for material ${request.materialItemId}, batch ${request.batchId}`,
           );
         const batch = await repo.findBatchForUpdate(request.batchId);
         if (
           !batch ||
           batch.itemId !== request.materialItemId ||
-          batch.qcStatus !== 'passed' ||
           batch.status !== 'active'
         ) {
           throw new ConflictError(
             ERROR_CODES.RESOURCE_CONFLICT,
-            `Batch ${request.batchId} is not active and QC-passed for this material`,
+            `Batch ${request.batchId} is not active for this material`,
           );
         }
         let remaining = request.quantity;
@@ -405,7 +404,7 @@ export class ProductionService {
         batchNumber: dto.batchNumber,
         manufacturedAt: dto.manufacturedAt ?? null,
         expiresAt: dto.expiresAt ?? null,
-        qcStatus: 'pending',
+        qcStatus: 'not_tracked',
         sourceType: 'production_order',
         sourceId: String(order.id),
         status: 'active',
@@ -416,7 +415,7 @@ export class ProductionService {
         unitId: order.outputUnitId,
         quantity: dto.quantity,
       });
-      await repo.addQcHoldBalance({
+      await repo.addAvailableBalance({
         itemId: order.itemId,
         batchId: batch.id,
         unitId: order.outputUnitId,

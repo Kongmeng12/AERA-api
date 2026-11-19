@@ -126,7 +126,7 @@ describe('SalesService', () => {
     });
   });
 
-  it('reserves full QC-passed stock before approving the order', async () => {
+  it('reserves available stock before approving the order', async () => {
     const { service, inventory, repository } = setup();
 
     const result = await service.approveSalesOrder(12);

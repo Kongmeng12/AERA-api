@@ -88,7 +88,7 @@ export class ProductionController {
         req.validated.body as RecordOutputDto,
         requireIdentity(req).userId,
       ),
-      'Successfully recorded production output in QC hold',
+      'Successfully recorded production output as available stock',
       201,
     );
   };

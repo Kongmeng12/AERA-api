@@ -43,7 +43,7 @@ function setup() {
     findWarehouseZone: jest.fn().mockResolvedValue({ id: 5, warehouseId: 8 }),
     batchForUpdate: jest.fn().mockResolvedValue(null),
     createStockBatch: jest.fn().mockResolvedValue({ id: 15 }),
-    addInventoryToQcHold: jest.fn().mockResolvedValue(undefined),
+    addInventoryToAvailable: jest.fn().mockResolvedValue(undefined),
     createStockMovement: jest.fn().mockResolvedValue(undefined),
     updatePurchaseOrderLineReceived: jest.fn((_id: number, quantity: string) => {
       orderLine.receivedQuantity = quantity;
@@ -62,7 +62,7 @@ function setup() {
 }
 
 describe('PurchasingService goods receipts', () => {
-  it('posts accepted quantities into QC hold, excluding rejected stock', async () => {
+  it('posts accepted quantities as available stock, excluding rejected stock', async () => {
     const { service, repository } = setup();
     const dto: CreateGoodsReceiptDto = {
       receiptNumber: 'GR-12',
@@ -81,7 +81,10 @@ describe('PurchasingService goods receipts', () => {
 
     const result = await service.createGoodsReceipt(dto, 9);
 
-    expect(repository.addInventoryToQcHold).toHaveBeenCalledWith({
+    expect(repository.createStockBatch).toHaveBeenCalledWith(
+      expect.objectContaining({ qcStatus: 'not_tracked', status: 'active' }),
+    );
+    expect(repository.addInventoryToAvailable).toHaveBeenCalledWith({
       itemId: 4,
       batchId: 15,
       unitId: 3,
@@ -98,6 +101,38 @@ describe('PurchasingService goods receipts', () => {
       rejectedQuantity: '1.0000',
       stockBatchId: 15,
     });
+  });
+
+  it('can receive against an active batch regardless of its prior QC status', async () => {
+    const { service, repository } = setup();
+    repository.batchForUpdate.mockResolvedValue({
+      id: 15,
+      qcStatus: 'pending',
+      status: 'active',
+      manufacturedAt: null,
+      expiresAt: null,
+    });
+
+    await service.createGoodsReceipt(
+      {
+        receiptNumber: 'GR-14',
+        purchaseOrderId: 7,
+        warehouseId: 8,
+        lines: [
+          {
+            purchaseOrderLineId: 21,
+            receivedQuantity: '2.0000',
+            rejectedQuantity: '0.0000',
+            batchNumber: 'BATCH-1',
+            warehouseZoneId: 5,
+          },
+        ],
+      },
+      9,
+    );
+
+    expect(repository.createStockBatch).not.toHaveBeenCalled();
+    expect(repository.addInventoryToAvailable).toHaveBeenCalled();
   });
 
   it('rejects a receipt that exceeds the unreceived order quantity without posting stock', async () => {
@@ -121,7 +156,7 @@ describe('PurchasingService goods receipts', () => {
       code: ERROR_CODES.VALIDATION_ERROR,
       errors: [{ field: 'lines.0.receivedQuantity' }],
     });
-    expect(repository.addInventoryToQcHold).not.toHaveBeenCalled();
+    expect(repository.addInventoryToAvailable).not.toHaveBeenCalled();
     expect(repository.createStockMovement).not.toHaveBeenCalled();
   });
 });

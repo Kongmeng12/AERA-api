@@ -45,7 +45,7 @@ function setup(overrides: Record<string, jest.Mock> = {}) {
     batchId: 30,
     unitId: 6,
     quantity: '1.0000',
-    disposition: 'qc_hold',
+    disposition: 'available',
     unitPriceSnapshot: '5.0000',
     lineCreditAmount: '5.0000',
     reason: null,
@@ -115,7 +115,7 @@ describe('ReturnsService', () => {
     expect(repository.createSalesReturn).not.toHaveBeenCalled();
   });
 
-  it('approves the return atomically with QC hold stock and an issued credit note', async () => {
+  it('approves the return atomically with available stock and an issued credit note', async () => {
     const { service, repository, inventory, manager } = setup();
 
     const result = await service.approve(21, { creditNoteNumber: 'CN-1' }, 7);

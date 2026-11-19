@@ -19,13 +19,13 @@ export function createProductionRouter(controller: ProductionController): Router
   router.use(authenticate);
   router.get(
     '/bills-of-materials',
-    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.QC),
+    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE),
     validate({ query: listBomsQuerySchema }),
     controller.listBoms,
   );
   router.get(
     '/bills-of-materials/:id',
-    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.QC),
+    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE),
     validate({ params: productionIdParamsSchema }),
     controller.getBom,
   );
@@ -43,13 +43,13 @@ export function createProductionRouter(controller: ProductionController): Router
   );
   router.get(
     '/orders',
-    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.QC),
+    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE),
     validate({ query: listProductionOrdersQuerySchema }),
     controller.listOrders,
   );
   router.get(
     '/orders/:id',
-    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE, ROLES.QC),
+    authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.WAREHOUSE),
     validate({ params: productionIdParamsSchema }),
     controller.getOrder,
   );

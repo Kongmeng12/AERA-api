@@ -179,7 +179,7 @@ openApiRegistry.registerPath({
   path: '/production/orders/{id}/material-issues',
   tags: ['Production'],
   security,
-  summary: 'Issue QC-passed raw materials to a production order',
+  summary: 'Issue available raw materials to a production order',
   description:
     'Available inventory is decremented and production issue movements are recorded atomically.',
   request: { params: productionIdParamsSchema, body: jsonBody(issueMaterialsSchema) },
@@ -194,11 +194,11 @@ openApiRegistry.registerPath({
   path: '/production/orders/{id}/outputs',
   tags: ['Production'],
   security,
-  summary: 'Record a production output in QC hold',
-  description: 'Creates the output batch and QC-hold balance with a stock movement atomically.',
+  summary: 'Record a production output as available stock',
+  description: 'Creates the output batch and available balance with a stock movement atomically.',
   request: { params: productionIdParamsSchema, body: jsonBody(recordOutputSchema) },
   responses: {
-    201: successResponse('Successfully recorded production output in QC hold', orderSchema),
+    201: successResponse('Successfully recorded production output as available stock', orderSchema),
     ...commonErrors,
     409: errorResponse('Production order conflict'),
   },

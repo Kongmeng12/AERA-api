@@ -75,7 +75,7 @@ openApiRegistry.registerPath({
   security,
   summary: 'Approve a customer return and issue a credit note',
   description:
-    'Requires role: admin or manager. Returned quantities enter QC hold and cannot be sold until released by QC.',
+    'Requires role: admin or manager. Returned quantities are recorded as available stock; physical QC is handled outside this API.',
   request: {
     params: returnIdParamsSchema,
     body: jsonBody(approveSalesReturnSchema),

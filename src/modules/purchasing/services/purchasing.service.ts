@@ -342,7 +342,7 @@ export class PurchasingService {
                   batchNumber,
                   manufacturedAt,
                   expiresAt,
-                  qcStatus: 'pending',
+                  qcStatus: 'not_tracked',
                   sourceType: 'goods_receipt',
                   sourceId: String(receipt.id),
                   status: 'active',
@@ -351,10 +351,10 @@ export class PurchasingService {
             );
             batchId = batch.id;
           } else {
-            if (existingBatch.qcStatus !== 'pending' || existingBatch.status !== 'active') {
+            if (existingBatch.status !== 'active') {
               throw new ConflictError(
                 ERROR_CODES.RESOURCE_CONFLICT,
-                `Batch ${batchNumber} has already completed QC or is inactive; use a new batch number`,
+                `Batch ${batchNumber} is inactive; use an active batch`,
               );
             }
             if (
@@ -382,7 +382,7 @@ export class PurchasingService {
             batchId = existingBatch.id;
           }
 
-          await repository.addInventoryToQcHold({
+          await repository.addInventoryToAvailable({
             itemId: orderLine.itemId,
             batchId,
             unitId: orderLine.unitId,

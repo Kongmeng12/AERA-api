@@ -81,7 +81,7 @@ openApiRegistry.registerPath({
   security,
   summary: 'Approve a sales order and reserve stock',
   description:
-    'Requires role: admin or manager. Reserves the full quantity from active, QC-passed available stock.',
+    'Requires role: admin or manager. Reserves the full quantity from active available stock.',
   request: { params: salesIdParamsSchema },
   responses: {
     200: successResponse(

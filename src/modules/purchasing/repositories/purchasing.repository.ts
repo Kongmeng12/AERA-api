@@ -243,7 +243,7 @@ export class PurchasingRepository {
     return this.repo(StockBatch).update({ id }, data);
   }
 
-  async addInventoryToQcHold(data: {
+  async addInventoryToAvailable(data: {
     itemId: number;
     batchId: number;
     unitId: number;
@@ -262,7 +262,7 @@ export class PurchasingRepository {
         data.unitId,
         data.warehouseId,
         data.zoneId,
-        'qc_hold',
+        'available',
         data.quantity,
       ],
     );
