@@ -4,7 +4,9 @@ import swaggerUi from 'swagger-ui-express';
 import { appConfig } from '../config/app.config';
 import { openApiRegistry } from '../shared/openapi/registry';
 import '../modules/auth/routes/auth.openapi';
+import '../modules/inventory/routes/inventory.openapi';
 import '../modules/master-data/routes/master-data.openapi';
+import '../modules/purchasing/routes/purchasing.openapi';
 import '../modules/roles/routes/roles.openapi';
 import '../modules/users/routes/users.openapi';
 
