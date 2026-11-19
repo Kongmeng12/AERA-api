@@ -74,6 +74,14 @@ Integration tests **wipe the database they connect to**, so they refuse to run u
 | `POST /sales-orders`                                                     | Admin, Sales                                               |
 | `POST /sales-orders/:id/approve`                                         | Admin, Manager                                             |
 | `POST /sales-orders/:id/cancel`                                          | Admin, Manager (sales may cancel their own pending orders) |
+| `GET /inventory/transfers`, `GET /inventory/transfers/:id`                | Admin, Manager, Warehouse, Purchasing                      |
+| `POST /inventory/transfers`, `POST /inventory/transfers/:id/dispatch`, `POST /inventory/transfers/:id/receive` | Admin, Manager, Warehouse |
+| `GET /inventory/counts`, `GET /inventory/counts/:id`                      | Admin, Manager, Warehouse, Purchasing                      |
+| `POST /inventory/counts`                                                  | Admin, Manager, Warehouse                                  |
+| `POST /inventory/counts/:id/approve`                                      | Admin, Manager                                             |
+| `GET /inventory/writeoffs`, `GET /inventory/writeoffs/:id`                | Admin, Manager, Warehouse, Purchasing                       |
+| `POST /inventory/writeoffs`                                               | Admin, Manager, Warehouse                                  |
+| `POST /inventory/writeoffs/:id/approve`, `POST /inventory/writeoffs/:id/reject` | Admin, Manager                                     |
 | `GET /sales-invoices`, `GET /sales-invoices/:id`                         | Admin, Manager, Sales, Accounting                          |
 | `POST /payment-receipts`                                                 | Admin, Accounting                                          |
 | `GET /sales-returns`, `GET /sales-returns/:id`                           | Admin, Manager, Sales, Accounting                          |
@@ -97,6 +105,8 @@ Sales orders use effective customer/item price lists and require manager approva
 Approved customer returns create a credit note and record returned quantities as available stock.
 Supplier bills are matched to received PO quantities before posting; supplier payments must be allocated to posted bills.
 Accepted receipts and production outputs are recorded as available stock. QC is performed manually outside the API; QC endpoints are deferred. Production quantities currently use the item's base output unit, and material issues require inventory in the BOM unit; automatic unit conversion is not supported.
+
+Inventory transfers deduct available stock at dispatch and add it to the destination as quantities are received; partial receipts are supported. Stock counts capture a zone snapshot and require admin/manager approval before adjustments; any stock movement in that zone after the snapshot requires a recount. Write-offs require admin/manager approval, and the requester cannot approve their own request. These operations only affect available stock; existing QC-held balances are unchanged.
 
 ## Project layout
 

@@ -13,6 +13,7 @@ import '../modules/production/routes/production.openapi';
 import '../modules/returns/routes/returns.openapi';
 import '../modules/roles/routes/roles.openapi';
 import '../modules/sales/routes/sales.openapi';
+import '../modules/stock-operations/routes/stock-operations.openapi';
 import '../modules/users/routes/users.openapi';
 
 export function buildOpenApiDocument() {

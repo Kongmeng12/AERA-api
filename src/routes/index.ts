@@ -11,6 +11,7 @@ import { createProductionModule } from '../modules/production/production.module'
 import { createRolesModule } from '../modules/roles/roles.module';
 import { createReturnsModule } from '../modules/returns/returns.module';
 import { createSalesModule } from '../modules/sales/sales.module';
+import { createStockOperationsModule } from '../modules/stock-operations/stock-operations.module';
 import { createUsersModule } from '../modules/users/users.module';
 
 export function createApiRouter(dataSource: DataSource): Router {
@@ -24,6 +25,7 @@ export function createApiRouter(dataSource: DataSource): Router {
   const finance = createFinanceModule(dataSource);
   const delivery = createDeliveryModule(dataSource, sales.service, inventory.service);
   const production = createProductionModule(dataSource);
+  const stockOperations = createStockOperationsModule(dataSource);
 
   const router = Router();
   router.use('/health', createHealthRouter(dataSource));
@@ -38,5 +40,6 @@ export function createApiRouter(dataSource: DataSource): Router {
   router.use(finance.router);
   router.use(delivery.router);
   router.use('/production', production.router);
+  router.use(stockOperations.router);
   return router;
 }
