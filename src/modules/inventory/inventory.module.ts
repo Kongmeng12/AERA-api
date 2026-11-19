@@ -7,9 +7,10 @@ import { InventoryService } from './services/inventory.service';
 
 export interface InventoryModule {
   router: Router;
+  service: InventoryService;
 }
 
 export function createInventoryModule(dataSource: DataSource): InventoryModule {
   const service = new InventoryService(new InventoryRepository(dataSource));
-  return { router: createInventoryRouter(new InventoryController(service)) };
+  return { router: createInventoryRouter(new InventoryController(service)), service };
 }
