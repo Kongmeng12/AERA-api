@@ -157,9 +157,66 @@ describe('platform', () => {
         'PUT /users/{id}',
         'PATCH /users/{id}',
         'DELETE /users/{id}',
+        ...[
+          '/customer-types',
+          '/customers',
+          '/suppliers',
+          '/units',
+          '/item-categories',
+          '/items',
+          '/warehouses',
+        ].flatMap((path) => [
+          `GET ${path}`,
+          `POST ${path}`,
+          `GET ${path}/{id}`,
+          `PATCH ${path}/{id}`,
+          `DELETE ${path}/{id}`,
+        ]),
       ].sort(),
     );
     await request(app).get('/api/docs/').expect(200).expect('Content-Type', /html/);
+  });
+});
+
+describe('master data', () => {
+  it('protects master-data routes and creates customer types and customers', async () => {
+    await request(app).get(`${API}/customers`).expect(401);
+
+    const { accessToken: staffToken } = await login(STAFF);
+    await request(app).get(`${API}/customers`).set(bearer(staffToken)).expect(403);
+
+    const { accessToken: adminToken } = await login(ADMIN);
+    const suffix = Date.now().toString();
+    const customerType = await request(app)
+      .post(`${API}/customer-types`)
+      .set(bearer(adminToken))
+      .send({ code: `TYPE-${suffix}`, name: 'Retail' })
+      .expect(201);
+    const customerTypeId = bodyOf<{ id: number }>(customerType).data.id;
+
+    const customer = await request(app)
+      .post(`${API}/customers`)
+      .set(bearer(adminToken))
+      .send({
+        customerCode: `CUS-${suffix}`,
+        customerTypeId,
+        name: 'Example Shop',
+      })
+      .expect(201);
+    expect(bodyOf<{ customerCode: string; creditLimit: string }>(customer).data).toMatchObject({
+      customerCode: `CUS-${suffix}`,
+      creditLimit: '0.0000',
+    });
+
+    await request(app)
+      .post(`${API}/customers`)
+      .set(bearer(adminToken))
+      .send({
+        customerCode: `CUS-${suffix}`,
+        customerTypeId,
+        name: 'Duplicate Shop',
+      })
+      .expect(409);
   });
 });
 
